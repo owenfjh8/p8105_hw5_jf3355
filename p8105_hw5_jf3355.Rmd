@@ -117,4 +117,42 @@ homicide_df %>%
   unnest(tidy_results) %>%
   select(city_state, estimate, starts_with("conf"))
 ```
+##Problem2
+#Create a tidy dataframe containing data from all participants,including the subject ID, arm, and observations over time:
+```{r}
+file_df = 
+  tibble(path = list.files("data")) %>% 
+  mutate(data = 
+           map(path, ~read.csv(str_c("data/", .x)))) %>% 
+  unnest(data)
 
+study_df =
+  file_df %>% 
+  separate(path, into = c('arm', 'id'), sep = "_") %>%
+  mutate(id = str_replace(id,".csv","")) %>% 
+  pivot_longer(
+    week_1:week_8,
+    names_to = "week",
+    names_prefix = "week_",
+    values_to = "observation"
+  ) %>% 
+  mutate(
+    week = as.integer(week),
+    arm = recode(arm, "con"= "Control", "exp" = "Experiment"),
+    arm = factor(arm),
+    id = factor(id)
+  )
+study_df
+```
+#Make a spaghetti plot showing observations on each subject over time
+```{r}
+study_df %>%
+  ggplot(aes(x = week, y = observation, color = id, linetype = arm)) +
+  geom_line() + 
+  labs(
+    title = "Observation of Control and Experimental Groups Over 8 Weeks",
+    x = "Week",
+    y = "Observation")
+```
+#Comment: From the plot, we see that there is no significant linear relationship between them, and after week 7, there is a separation between them.
+##Problem 3
